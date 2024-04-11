@@ -1,0 +1,47 @@
+# See https://github.com/golangci/golangci-lint/blob/master/.golangci.example.yml
+run:
+  tests: true
+
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+  gocyclo:
+    min-complexity: 20
+  misspell:
+    locale: UK
+  unparam:
+    check-exported: true
+  revive:
+    severity: error # if it is not an error we care a little (but not enough to fix it)
+
+linters:
+  disable-all: true
+  enable:
+    - errname
+    - errcheck
+    - gci
+    - gocyclo
+    - gofumpt
+    - govet
+    - goconst
+    - staticcheck
+    - ineffassign
+    - revive
+    - misspell
+    - unparam
+    - unused
+    - cyclop
+
+issues:
+  disable-all: true
+  exclude-rules:
+    - linters:
+        - gomnd
+        - goconst
+        - goerr113
+        - noctx
+        - structcheck
+        - unused
+        - unparam
+      path: "_test.go"
