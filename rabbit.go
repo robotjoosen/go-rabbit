@@ -22,19 +22,24 @@ func NewConnection(url string) (*rabbitmq.Conn, error) {
 	return conn, nil
 }
 
-func NewConsumer(conn *rabbitmq.Conn, exchange, routingKey, queueName string) (*rabbitmq.Consumer, error) {
-	c, err := rabbitmq.NewConsumer(conn, queueName,
-		rabbitmq.WithConsumerOptionsRoutingKey(routingKey),
+func NewConsumer(conn *rabbitmq.Conn, exchange string, routingKeys []string, queueName string) (*rabbitmq.Consumer, error) {
+	options := []func(*rabbitmq.ConsumerOptions){
 		rabbitmq.WithConsumerOptionsQueueAutoDelete,
 		rabbitmq.WithConsumerOptionsExchangeDeclare,
 		rabbitmq.WithConsumerOptionsExchangeName(exchange),
-	)
+	}
+	for _, key := range routingKeys {
+		options = append(options, rabbitmq.WithConsumerOptionsRoutingKey(key))
+	}
+
+	c, err := rabbitmq.NewConsumer(conn, queueName, options...)
+
 	if err != nil {
 		slog.Error("failed to create consumer",
 			slog.String("error", err.Error()),
 			slog.String("queue_name", queueName),
 			slog.String("exchange", exchange),
-			slog.String("routing_key", routingKey),
+			slog.Any("routing_keys", routingKeys),
 		)
 
 		return nil, err
@@ -43,14 +48,14 @@ func NewConsumer(conn *rabbitmq.Conn, exchange, routingKey, queueName string) (*
 	slog.Info("consumer created",
 		slog.String("queue_name", queueName),
 		slog.String("exchange", exchange),
-		slog.String("routing_key", routingKey),
+		slog.Any("routing_keys", routingKeys),
 	)
 
 	return c, nil
 }
 
-func RunConsumer(conn *rabbitmq.Conn, exchange, routingKey, queueName string, handler rabbitmq.Handler, ctx context.Context) error {
-	c, err := NewConsumer(conn, exchange, routingKey, queueName)
+func RunConsumer(conn *rabbitmq.Conn, exchange string, routingKeys []string, queueName string, handler rabbitmq.Handler, ctx context.Context) error {
+	c, err := NewConsumer(conn, exchange, routingKeys, queueName)
 	if err != nil {
 		return err
 	}
@@ -59,7 +64,7 @@ func RunConsumer(conn *rabbitmq.Conn, exchange, routingKey, queueName string, ha
 		slog.Info("consumer closed",
 			slog.String("queue_name", queueName),
 			slog.String("exchange", exchange),
-			slog.String("routing_key", routingKey),
+			slog.Any("routing_key", routingKeys),
 		)
 
 		c.Close()
@@ -70,7 +75,7 @@ func RunConsumer(conn *rabbitmq.Conn, exchange, routingKey, queueName string, ha
 			slog.String("error", err.Error()),
 			slog.String("queue_name", queueName),
 			slog.String("exchange", exchange),
-			slog.String("routing_key", routingKey),
+			slog.Any("routing_key", routingKeys),
 		)
 
 		return err
@@ -81,7 +86,7 @@ func RunConsumer(conn *rabbitmq.Conn, exchange, routingKey, queueName string, ha
 	slog.Info("consumer shutting down",
 		slog.String("queue_name", queueName),
 		slog.String("exchange", exchange),
-		slog.String("routing_key", routingKey),
+		slog.Any("routing_key", routingKeys),
 	)
 
 	return nil

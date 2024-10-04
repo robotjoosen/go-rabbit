@@ -18,7 +18,7 @@ func ExampleConsumer() {
 	c, err := rabbit.NewConsumer(
 		conn,
 		"test-exchange",
-		"test-routing-key",
+		[]string{"test-routing-key"},
 		"test-queue-name",
 	)
 	if err != nil {
@@ -46,7 +46,7 @@ func ExampleRunConsumer() {
 		if err = rabbit.RunConsumer(
 			conn,
 			"test-exchange",
-			"test-routing-key",
+			[]string{"test-routing-key"},
 			"test-queue-name",
 			func(d rabbitmq.Delivery) (action rabbitmq.Action) {
 				return rabbitmq.Ack
